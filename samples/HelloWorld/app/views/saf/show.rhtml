@@ -1,0 +1,20 @@
+<p>
+  <b>id:</b> <%=h @stored_message.id %>
+</p><p>
+  <b>duplication_check_id:</b> <%=h @stored_message.duplication_check_id %>
+</p><p>
+  <b>queue:</b> <%=h @stored_message.queue %>
+</p><p>
+  <b>headers:</b> <%=h Marshal::load(@stored_message.headers).inspect %>
+</p><p>
+  <b>object:</b> <%=h Marshal::load(@stored_message.object).inspect %>
+</p><p>
+  <b>status:</b> <%=h @stored_message.status %>
+</p><p>
+  <b>created_at:</b> <%=h @stored_message.created_at %>
+</p><p>
+  <b>updated_at:</b> <%=h @stored_message.updated_at %>
+</p>
+
+<%= link_to 'Edit', :action => 'edit', :id => @stored_message %> |
+<%= link_to 'Back', :action => 'list' %>

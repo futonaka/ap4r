@@ -1,0 +1,4 @@
+require 'rubygems'
+require 'ap4r'
+
+load 'ap4r/mongrel_ap4r.rb'

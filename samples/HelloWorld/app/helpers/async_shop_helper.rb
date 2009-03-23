@@ -1,0 +1,2 @@
+module AsyncShopHelper
+end

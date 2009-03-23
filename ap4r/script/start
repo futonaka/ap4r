@@ -1,0 +1,5 @@
+require 'rubygems'
+require 'ap4r/script/setup'
+
+require 'ap4r/script/queue_manager_control'
+Ap4r::Script::QueueManagerControl.new.start(ARGV)

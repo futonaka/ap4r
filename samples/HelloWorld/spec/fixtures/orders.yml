@@ -1,0 +1,6 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+AP4R_Book:
+  id: 1
+  item: "Introduction to AP4R"
+
+

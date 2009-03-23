@@ -1,0 +1,61 @@
+purpose    : Test
+description: This is the YAML doc
+  this yaml has many many unnecessary setting
+  for testing/explanation only.
+  edit properly for normal use.
+
+---
+
+log4r_config:
+  # define all pre config ...
+  pre_config:
+    global:
+      level: DEBUG
+    root  :
+      level: DEBUG
+    parameters:
+      - name   : x
+        value  : aaa
+      - name   : y
+        value  : bbb
+
+  # define all loggers ...
+  loggers:
+    - name      : qm_logger
+      level     : DEBUG
+      additive  : 'false'
+      trace     : 'false'      
+      outputters:
+        - stderr
+        - logfile 
+
+    - name      :  yourlogger  #not used yet...
+      level     : INFO
+      outputters: 
+        - stderr
+        - logfile 
+
+  # define all outputters (incl. formatters)      
+  outputters:
+    - type     : StderrOutputter
+      name     : stderr 
+      level    : DEBUG
+      only_at  :
+        - INFO
+        - WARN
+        - FATAL
+      formatter:
+        date_pattern: '%y%m%d %H:%M:%S'
+        pattern     : '%d %l: %m '
+        type        : PatternFormatter
+
+    - type        : DateFileOutputter
+      name        : logfile
+      level       : DEBUG
+      date_pattern: '%Y%m%d'
+      trunc       : 'false'
+      dirname     : "#{HOME}/logs"
+      formatter   :
+        date_pattern: '%y%m%d %H:%M:%S'
+        pattern     : '%d %l: %m'
+        type        : PatternFormatter

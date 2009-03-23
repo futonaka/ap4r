@@ -1,0 +1,2 @@
+module SyncHelloHelper
+end

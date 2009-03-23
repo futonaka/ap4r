@@ -1,0 +1,10 @@
+---
+# need development? or production?
+# or consider proper structure for these
+development:
+
+test:
+  root_dir: ~/work/ap4r_project
+  config_file: config/queues_disk.cfg
+
+production:

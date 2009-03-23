@@ -1,0 +1,21 @@
+<html>
+<head>
+<title>retention status view</title>
+<%= javascript_include_tag "prototype" %>
+</head>
+<body>
+
+<h1>Message Retension Status</h1>
+
+  <div id="image">
+    <img src="<%= url_for :action=>'retention_status_by_gruff',
+      :time => Time.now.to_i%>" />
+  </div>
+
+  <%= periodically_call_remote( :update => 'image',
+                                :url => {:action => :status_img},
+                                :frequency => 3 )%>
+
+
+</body>
+</html>

@@ -1,0 +1,4 @@
+require 'rubygems'
+require 'ap4r'
+
+require 'ap4r/util/irm'

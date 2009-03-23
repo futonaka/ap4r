@@ -1,0 +1,68 @@
+== 0.3.x
+
+==- 0.3.7 (March 23, 2009)
+* Added: fault tolerance on connection from Rails to AP4R servers. (fail over and round robin connection etc.)
+* Changed: async_helper.rb was moved from rails plugin to ap4r core (ap4r/lib directory).
+* Fixed: bugs of queue database connection via PostgresPR etc.
+         Based on a patch from cypher256 <kashihara at gmail.com>
+
+=== 0.3.6 (February 6, 2008)
+* Added: configuration to set HTTP timeout.
+         Based on a patch from Artem Vasiliev <abublic at gmail.com>
+* Added: provisional support Rails2.0.
+* Changed: the location of message_builder.rb from rails plugin to ap4r core (ap4r/lib directory).
+* Fixed: bug (tracker #17206) that uninitialized constant error occurs when :active_record_store is used as session store.
+
+=== 0.3.5 (November 29, 2007)
+* Fixed: bug that SAF transaction is NOT guaranteed when some models are created/updated before using of ap4r.async_to API in ap4r.transaction block.
+
+=== 0.3.4 (October 31, 2007)
+* Added: Support ActiveRecord as reliable RDBMS persistence.
+* Added: Capistrano recipes.
+* Added: A dispatcher via druby.
+         Based on a patch from Kouhei Sutou <kou at cozmixng.org>.
+* Added: Support memory queue which is volatile.
+
+=== 0.3.3 (September 19, 2007)
+* Added: Support with hoe.
+* Added: Support PostgreSQL as reliable RDBMS persistence.
+* Added: Test supports, stub of queueing and service controls.
+
+=== 0.3.2 (June 7th, 2007)
+* Fixed: util/loc.rb doesn't work.
+* Changed: Argument order of async_dispatch has changed, backward INCOMPATIBLE.
+* Added: Dynamic configuration with ERb.
+* Added: Script to run AP4R on Mongrel.
+* Changed: How to plugin and main API names have changed.
+* Added: Support of several Content-type on asynchronous call.
+* Added: Block style for async_to.
+* Added: Url rewrite filter.
+
+=== 0.3.1 (April 24th, 2007)
+
+* Changed: @delete_mode of AsyncController to @@saf_delete_mode with accessor.
+* Changed: default value of dispatch_mode, from :XMLRPC to :HTTP.
+* Added: Bootstrap script to let ap4r run on mongrel, experimental yet.
+
+=== 0.3.0 (April 6th, 2007)
+
+* Changed: name space from "AP4R" to "Ap4r".
+* Added: support the latest version for Ruby(1.8.6) and RubyGems(0.9.2) and Rails(1.2.3) .
+
+== 0.2.x
+
+=== 0.2.0 (October 17th, 2006)
+
+* Added: Protocols to invoke asynchronous logics.
+* Added: At-lease-once QoS.
+
+== 0.1.x
+
+=== 0.1.1 (October 5th, 2006)
+
+* Changed: Enriched RDoc.
+* Changed: Enriched README.
+
+=== 0.1.0 (September 1st, 2006)
+
+* Initial release.
