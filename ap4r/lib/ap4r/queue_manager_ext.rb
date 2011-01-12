@@ -15,6 +15,7 @@ require 'ap4r/multi_queue'
 require 'ap4r/retention_history'
 require 'ap4r/dispatcher'
 require 'ap4r/carrier'
+require 'ap4r/recoverer'
 
 module ReliableMsg #:nodoc:
 
@@ -109,6 +110,7 @@ module ReliableMsg #:nodoc:
     # 1. Original reliable-msg server (message store and druby).
     # 2. Dispatchers
     # 3. Carriors (if exists)
+    # 4. Recoverers (if exists)
     # These are Reversed in +stop+.
     def start
       begin
@@ -121,6 +123,9 @@ module ReliableMsg #:nodoc:
 
           @carriors = ::Ap4r::Carriers.new(self, @config.carriers, @logger, @dispatchers)
           @carriors.start
+
+          @recoverers = ::Ap4r::Recoverers.new(self, @config.recoverers, @logger)
+          @recoverers.start
 
           @lifecycle_listeners.each {|l| l.start }
         end
@@ -136,6 +141,7 @@ module ReliableMsg #:nodoc:
       @global_lock.synchronize do
         return unless @@active == self
         @lifecycle_listeners.each {|l| l.stop }
+        @recoverers.stop
         @carriors.stop
         @dispatchers.stop
         stop_original
