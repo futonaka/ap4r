@@ -62,7 +62,7 @@ module Ap4r
             break unless message_exist
           }
 
-        rescue => Exception => ex
+        rescue Exception => ex
           @logger.warn "error in recover #{ex}\n#{ex.backtrace.join("\n\t")}\n"
         end
       end
