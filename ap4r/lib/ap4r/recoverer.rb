@@ -11,6 +11,18 @@ require 'reliable-msg'
 
 module Ap4r
 
+  # This class aims to recover DLQ messages.
+  # You can set some values to change the behavior in config file.
+  #
+  # threads:    The count of recoverer threads.
+  # every:      The time to repeat per it. 
+  # count:      The count of messages recovered every time.
+  # on_expired: The Processing for :max_deliveries times recovered messages.
+  #   ex) configuration to put the message to DLQ again.
+  #     <pre>
+  #       on_expired: "dlq.put(m.object, m.headers)"
+  #     </pre>
+  #
   class Recoverers
 
     def initialize(queue_manager, config, logger)
@@ -44,8 +56,9 @@ module Ap4r
     def recoverer_loop group, recoverer, index
       group.add Thread.current
       @logger.info { "starting a recoverer (index #{index})" }
-      every = recoverer["every"].to_f
-      count = recoverer["count"].to_i
+      every      = recoverer["every"].to_f
+      count      = recoverer["count"].to_i
+      on_expired = eval(recoverer["on_expired"].to_s) || Proc.new { |m| }
 
       until Thread.current[:dying]
         begin
@@ -53,14 +66,17 @@ module Ap4r
           dlq = ReliableMsg::Queue.new "$dlq"
           qm = dlq.send :qm
 
-          ids = qm.list(:queue => "$dlq").select{ |headers|
-            headers[:redelivery] < headers[:max_deliveries]
-          }[0..(count - 1)].map{ |headers|
+          ids = qm.list(:queue => "$dlq")[0..(count - 1)].map { |headers|
             headers[:id]
           }
 
           ids.each { |id|
             dlq.get(:id => id) { |m|
+              if headers[:max_deliveries] <= headers[:redelivery]
+                on_expired.call(m)
+                next
+              end
+
               ReliableMsg::Queue.new(m.headers[:queue_name]).put(m.object, m.headers)
             }
           }
@@ -69,11 +85,12 @@ module Ap4r
           @logger.warn "error in recover #{ex}\n#{ex.backtrace.join("\n\t")}\n"
         end
       end
-      @logger.info { "ends a recoverer" }
 
     rescue => ex
       @logger.error "error in recover #{ex}\n#{ex.backtrace.join("\n\t")}\n"
-      @logger.info { "ends a recoverer" }
+
+    ensure
+      @logger.info { "ends a recoverer (index #{index})" }
     end
 
   end
