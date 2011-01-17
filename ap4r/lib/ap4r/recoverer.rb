@@ -53,21 +53,18 @@ module Ap4r
           dlq = ReliableMsg::Queue.new "$dlq"
           qm = dlq.send :qm
 
-          messages = 0
+          ids = qm.list(:queue => "$dlq").select{ |headers|
+            headers[:redelivery] < headers[:max_deliveries]
+          }[0..(count - 1)].map{ |headers|
+            headers[:id]
+          }
 
-          qm.list(:queue => "$dlq").each do |item|
-            if item[:redelivery].to_i >= item[:max_deliveries].to_i
-              next
-            end
-
-            message_exist = dlq.get(:id => item[:id]) { |m|
+          ids.each { |id|
+            dlq.get(:id => id) { |m|
               ReliableMsg::Queue.new(m.headers[:queue_name]).put(m.object, m.headers)
-              true
             }
-            break unless message_exist
-            break if (messages += 1).eql? count
-          end
-
+          }
+          
         rescue Exception => ex
           @logger.warn "error in recover #{ex}\n#{ex.backtrace.join("\n\t")}\n"
         end
