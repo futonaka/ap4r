@@ -41,31 +41,41 @@ module Ap4r
     end
 
     private
-    def recoverer_loop group, recoverer
+    def recoverer_loop group, recoverer, index
       group.add Thread.current
       @logger.info { "starting a recoverer (index #{index})" }
       every = recoverer["every"].to_f
       count = recoverer["count"].to_i
-      select_cond = eval(recoverer["selector"])
-
-      selector = ReliableMsg::Queue.selector &select_cond
 
       until Thread.current[:dying]
         begin
           sleep every
           dlq = ReliableMsg::Queue.new "$dlq"
+          qm = dlq.send :qm
 
-          count.times {
-            message_exist = dlq.get(selector) { |m|
-              dlq.put m.object, m.headers
+          messages = 0
+
+          qm.list(:queue => "$dlq").each do |item|
+            if item[:redelivery].to_i >= item[:max_deliveries].to_i
+              next
+            end
+
+            message_exist = dlq.get(:id => item[:id]) { |m|
+              ReliableMsg::Queue.new(m.headers[:queue_name]).put(m.object, m.headers)
+              true
             }
             break unless message_exist
-          }
+            break if (messages += 1).eql? count
+          end
 
         rescue Exception => ex
           @logger.warn "error in recover #{ex}\n#{ex.backtrace.join("\n\t")}\n"
         end
       end
+      @logger.info { "ends a recoverer" }
+
+    rescue => ex
+      @logger.error "error in recover #{ex}\n#{ex.backtrace.join("\n\t")}\n"
       @logger.info { "ends a recoverer" }
     end
 
