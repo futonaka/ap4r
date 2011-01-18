@@ -20,7 +20,7 @@ module Ap4r
   # on_expired: The Processing for :max_deliveries times recovered messages.
   #   ex) configuration to put the message to DLQ again.
   #     <pre>
-  #       on_expired: "dlq.put(m.object, m.headers)"
+  #       on_expired: "Proc.new{ |m| dlq.put(m.object, m.headers)}"
   #     </pre>
   #
   class Recoverers
@@ -72,7 +72,7 @@ module Ap4r
 
           ids.each { |id|
             dlq.get(:id => id) { |m|
-              if headers[:max_deliveries] <= headers[:redelivery]
+              if m.headers[:max_deliveries] <= m.headers[:redelivery]
                 on_expired.call(m)
                 next
               end
