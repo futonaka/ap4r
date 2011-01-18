@@ -64,9 +64,8 @@ module Ap4r
         begin
           sleep every
           dlq = ReliableMsg::Queue.new "$dlq"
-          qm = dlq.send :qm
 
-          ids = qm.list(:queue => "$dlq")[0..(count - 1)].map { |headers|
+          ids = @qm.list(:queue => "$dlq")[0..(count - 1)].map { |headers|
             headers[:id]
           }
 
