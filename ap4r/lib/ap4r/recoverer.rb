@@ -49,6 +49,7 @@ module Ap4r
       @logger.info{"stop_recoverer #{@group}"}
       return unless @group
       @group.list.each{|d| d[:dying] = true}
+      @group.list.each{|d| d.wakeup rescue nil}
       @group.list.each{|d| d.join }
     end
 
@@ -62,7 +63,6 @@ module Ap4r
 
       until Thread.current[:dying]
         begin
-          sleep every
           dlq = ReliableMsg::Queue.new "$dlq"
 
           ids = @qm.list(:queue => "$dlq")[0..(count - 1)].map { |headers|
@@ -79,7 +79,9 @@ module Ap4r
               ReliableMsg::Queue.new(m.headers[:queue_name]).put(m.object, m.headers)
             }
           }
-          
+
+          sleep every
+
         rescue Exception => ex
           @logger.warn "error in recover #{ex}\n#{ex.backtrace.join("\n\t")}\n"
         end
