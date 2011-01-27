@@ -17,7 +17,7 @@ describe Ap4r::Recoverers do
     @logger = Logger.new(nil)
   end
 
-  context "when start recoverer which initialized without config file" do
+  context "when start recoverer which initialized without config" do
     before do
       @recov = Ap4r::Recoverers.new(@manager, nil, @logger)
     end
@@ -85,12 +85,12 @@ describe Ap4r::Recoverers do
       context "if on_expired = \"Proc.new{ |m| dlq.put(m.object, m.headers)}\"" do
         before do
           config = [
-            #{
+            {
               "threads"    => 1,
               "every"      => 1.0,
               "count"      => 10,
               "on_expired" => "Proc.new{ |m| dlq.put(m.object, m.headers)}",
-            #}
+            }
           ]
           @recov = Ap4r::Recoverers.new(@manager, config, @logger)
           @recov.start
