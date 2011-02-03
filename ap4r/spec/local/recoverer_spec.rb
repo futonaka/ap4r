@@ -31,7 +31,7 @@ describe Ap4r::Recoverers do
     end
   end
 
-  context "when all arguments omitted" do
+  context "when initialized with all arguments" do
     context "and start" do
       before do
         config = [
