@@ -51,6 +51,7 @@ module Ap4r
       @group = ThreadGroup.new
       # TODO: needs refinement 2007/05/30 by shino
       @dispatch_targets = ""
+      @balancers = []
     end
 
     # Starts every dispatcher.
@@ -60,9 +61,12 @@ module Ap4r
       begin
         logger.info{ "about to start dispatchers with config\n#{@config.to_yaml}" }
         @config.each{ |conf|
+          balancer = ::Ap4r::Balancer.new(conf["balancer"], @@logger)
+          balancer.start
+          @balancers << balancer
           conf["threads"].to_i.times { |index|
-            Thread.fork(@group, conf, index){|group, conf, index|
-              dispatching_loop(group, conf, index)
+            Thread.fork(@group, conf, index, balancer){|group, conf, index, balancer|
+              dispatching_loop(group, conf, index, balancer)
             }
           }
           @dispatch_targets.concat(conf["targets"]).concat(';')
@@ -87,6 +91,7 @@ module Ap4r
       @group.list.each {|d| d[:dying] = true}
       @group.list.each {|d| d.join }
       @dispatch_targets = ""
+      @balancers.each { |p| p.stop }
     end
 
     private
@@ -101,7 +106,7 @@ module Ap4r
 
     # Defines the general structure for each dispatcher thread
     # from begging to end.
-    def dispatching_loop(group, conf, index)
+    def dispatching_loop(group, conf, index, balancer)
       group.add(Thread.current)
       mq = ::ReliableMsg::MultiQueue.new(conf["targets"])
       logger.info{ "start dispatcher: targets= #{mq}, index= #{index})" }
@@ -111,14 +116,22 @@ module Ap4r
         # logger.debug{ "try dispatch #{mq} #{mq.name}" }
         # TODO: needs timeout?, 2006/10/16 shino
         begin
-          mq.get{|m|
-            unless m
-              logger.debug{"message is nul"}
-              break
-            end
-            logger.debug{"dispatcher get message\n#{m.to_yaml}"}
-            response = get_dispather_instance(m.headers[:dispatch_mode], m, conf).call
-            logger.debug{"dispatcher get response\n#{response.to_yaml}"}
+          balancer.get { |host, port|
+            mq.get{|m|
+              unless m
+                logger.debug{"message is nul"}
+                break
+              end
+              m.headers[:target_url] = begin
+                                         uri = URI.parse(m.headers[:target_url])
+                                         uri.host = host
+                                         uri.port = port
+                                         uri.to_s
+                                       end 
+              logger.debug{"dispatcher get message\n#{m.to_yaml}"}
+              response = get_dispather_instance(m.headers[:dispatch_mode], m, conf).call
+              logger.debug{"dispatcher get response\n#{response.to_yaml}"}
+            }
           }
         rescue Exception => err
           logger.warn("dispatch err #{err.inspect}")
@@ -131,7 +144,6 @@ module Ap4r
     def logger
       @@logger
     end
-
 
     # A base class for dispathcer classes associated with each <tt>dispatch_mode</tt>.
     # Responsibilities of subclasses are to implement following methods, only +invoke+

@@ -15,6 +15,7 @@ require 'ap4r/multi_queue'
 require 'ap4r/retention_history'
 require 'ap4r/dispatcher'
 require 'ap4r/carrier'
+require 'ap4r/balancer'
 
 module ReliableMsg #:nodoc:
 
