@@ -37,13 +37,13 @@ module Ap4r
     end
 
     def stop
-      @logger.info { "stop balancer #{@group}" }
+      @logger.info { "stop balancer" }
       return unless @config
       @monitors.each { |m| m.stop }
     end
 
     def get_with_config
-      @locker.synchronize { 
+      target = @locker.synchronize { 
         actives = []
         @cond.wait_while {
           actives = @monitors.select{ |m| m.status == :active }
@@ -51,12 +51,13 @@ module Ap4r
         }
         return nil if Thread.current[:dying]
         active = actives.sort_by{ rand }.first
+        active.status = :processing
+        active
       }
-      active.status = :processing
       begin
-        yield active.host, active.port
+        yield target.host, target.port
       ensure 
-        active.status = :active if active.status == :processing
+        target.status = :active if target.status == :processing
       end
     end
 
@@ -87,14 +88,14 @@ module Ap4r
 
       def start
         @thread = Thread.fork{ monitor_loop }
-        @logger.info { "monitor started." }
+        @logger.info { "monitor started. host: #{@host}, port:#{@port}" }
       end
 
       def stop
         @thread[:dying] = true
         @thread.wakeup rescue nil
         @thread.join
-        @logger.info { "monitor stopped." }
+        @logger.info { "monitor stopped. host: #{@host}, port:#{@port}" }
       end
 
       def status
