@@ -4,6 +4,7 @@
 
 require 'rubygems'
 require 'reliable-msg'
+require 'ap4r/queue-manager'
 
 hack = true
 debug_hack = true

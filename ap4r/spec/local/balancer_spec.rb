@@ -4,24 +4,23 @@ require "reliable-msg"
 require "ap4r/balancer"
 
 describe Ap4r::Balancer do 
+
   before do
     @logger = Logger.new(STDOUT)
   end
 
   context "when initialized without config" do
     before do
-      @balancer = Ap4r::Balancer.new(nil, @logger)
+      @balancer = Ap4r::Balancer.new nil, @logger 
     end
 
     it "should be initialized." do
-      @balancer.should be_kind_of(Ap4r::Balancer)
+      @balancer.should be_kind_of Ap4r::Balancer
     end
 
     it "#start, #stop should not raise error." do
-      Proc.new {
-        @balancer.start
-        @balancer.stop
-      }.should_not raise_error(RuntimeError)
+      @balancer.start
+      @balancer.stop
     end
 
     it "#get should yield with nil, and return nil." do
@@ -37,71 +36,54 @@ describe Ap4r::Balancer do
     end
   end
 
+  context "when initialized with invalid config" do
+    it "should raise error." do
+      Proc.new {
+        Ap4r::Balancer.new({ "targets" => 123 }, @logger)
+      }.should raise_error
+    end
+  end
+
   context "when initialized with config" do
     before do
       balancer_config = { "targets" => 
-        [{:host => "localhost", :port => 3000}, "localhost:4000"] 
+        [{:host => "hogehost", :port => 1234}, "fugahost:5678"] 
       }
-      TCPSocket.stub!(:open).and_return(true)
-      @balancer = Ap4r::Balancer.new(balancer_config, @logger)
+      TCPSocket.stub!(:open).and_return true
+      @balancer = Ap4r::Balancer.new balancer_config, @logger
     end
     
     it "should be initialized." do
-      @balancer.should be_kind_of(Ap4r::Balancer)
+      @balancer.should be_kind_of Ap4r::Balancer
       @balancer.instance_variable_get(:@monitors).should have(2).items
-      monitor = []
-      @balancer.instance_variable_get(:@monitors).each{ |m|
-        monitor << m
+      @balancer.instance_variable_get(:@monitors).each{ |m| 
+        m.should be_kind_of Ap4r::Balancer::TargetMonitor
       }
-      monitor[0].should be_kind_of(Ap4r::Balancer::TargetMonitor)
-      monitor[1].should be_kind_of(Ap4r::Balancer::TargetMonitor)
     end
 
-    it "should be able to start." do
+    it "should be able to start and stop" do
       @balancer.start
-    end
-
-    it "should be able to start and stop, start..." do
-      Proc.new {
-        @balancer.start
-        @balancer.stop
-      }.should_not raise_error(RuntimeError)
+      @balancer.stop
     end
 
     context "and started" do
-      before do
-        @balancer.start
-      end
-
-      it "should be able to stop." do
-        Proc.new { 
-          @balancer.stop
-        }.should_not raise_error(RuntimeError)
-      end
-
       it "should be set #get_with_config to #get" do
         h, p = nil, nil
 
+        @balancer.start
         @balancer.get{ |host, port|
           h = host
           p = port
         }
-
         h.should_not be_nil
         p.should_not be_nil
       end
-
-      after do
-        @balancer.stop
-      end
     end
 
-    after do
-      @balancer.stop rescue nil
-    end
   end
 
   after do
+    @balancer.stop rescue nil
     @balancer = nil
     @logger = nil
   end

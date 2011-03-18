@@ -10,24 +10,27 @@ module Ap4r
   class Balancer
 
     def initialize(config, logger)
-      if config
-        alias :get :get_with_config
-        @monitors = config["targets"].to_a.map { |target|
-          host, port = if target.kind_of? String
-                         target.split(":")
-                       else
-                         [target[:host], target[:port]]
-                       end
-          TargetMonitor.new host, port, self, logger
-        }
-      else
-        alias :get :get_without_config
-      end
 
       @config = config
       @logger = logger
       @locker = Monitor.new
       @cond   = @locker.new_cond
+
+      if config
+        alias :get :get_with_config
+        @monitors = config["targets"].to_a.map { |target|
+          host, port = if target.kind_of? String
+                         target.split(":")
+                       elsif target.kind_of? Hash
+                         [target["host"], target["port"]]
+                       else
+                         raise "invalid target format!"
+                       end
+          TargetMonitor.new host, port, self, @locker, logger
+        }
+      else
+        alias :get :get_without_config
+      end
     end
 
     def start
@@ -77,13 +80,14 @@ module Ap4r
 
       attr_reader :host, :port
 
-      def initialize host, port, balancer, logger
+      def initialize host, port, balancer, balancer_locker, logger
         @host     = host
         @port     = port
         @balancer = balancer
         @logger   = logger
         @status   = :inactive
         @locker   = Monitor.new
+        @b_locker = balancer_locker
       end
 
       def start
@@ -105,9 +109,11 @@ module Ap4r
       end
 
       def status= value
-        @locker.synchronize {
-          @status = value
-          @balancer.on_target_state_changed
+        @b_locker.synchronize {
+          @locker.synchronize {
+            @status = value
+            @balancer.on_target_state_changed
+          }
         }
       end
 
