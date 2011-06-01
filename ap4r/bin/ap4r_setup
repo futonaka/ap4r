@@ -1,6 +1,0 @@
-Signal.trap("INT") { puts; exit }
-
-require File.dirname(__FILE__) + '/../lib/ap4r/script/setup'
-
-require 'ap4r/script/workspace_generator'
-Ap4r::Script::WorkspaceGenerator.new.run(ARGV, :generator => 'app')

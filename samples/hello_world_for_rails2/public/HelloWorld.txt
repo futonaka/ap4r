@@ -1,4 +1,0 @@
-Hello # ...written at Mon Mar 23 16:51:52 +0900 2009
-World # ...written at Mon Mar 23 16:52:02 +0900 2009
-Hello # ...written at Mon Mar 23 16:52:06 +0900 2009
-World # ...written at Mon Mar 23 16:52:16 +0900 2009
